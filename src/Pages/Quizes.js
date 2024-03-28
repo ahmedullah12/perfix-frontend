@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 
 const Quizes = () => {
@@ -55,9 +56,6 @@ const Quizes = () => {
   const [showExperiment, setShowExperiment] = useState(false);
   const [experimentStart, setExperimentStart] = useState(false);
 
-  
-  
-
   // useEffect(() => {
   //   const handleGetQuestionId = async() => {
   //     try{
@@ -87,43 +85,47 @@ const Quizes = () => {
   //   handleGetQuestions();
   // }, [questionnaireId]);
 
-
   const handleAnswerSelection = useCallback((option) => {
     setSelectedOption(option);
   }, []);
 
   const handleNextQuestion = () => {
+    if(selectedOption === null){
+      toast.error("Please select a option");
+      return;
+    }
     if (selectedOption !== null) {
       const updatedAnswers = [...answers, selectedOption];
       setAnswers(updatedAnswers);
     }
 
-
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedOption(null); 
+      setSelectedOption(null);
     }
   };
-  
-   
+
   const handleSubmitAns = () => {
+    if(selectedOption === null){
+      toast.error("Please select a option");
+      return;
+    }
     if (selectedOption !== null) {
       const updatedAnswers = [...answers, selectedOption];
-      if(updatedAnswers.length === questions.length){
+      if (updatedAnswers.length === questions.length) {
+        toast.success("Quiz submitted")
         setAnswers(updatedAnswers);
-      }
-      else{
-        return alert("You have already submitted the answers")
+      } else {
+        return toast.error("You have already submitted the answers");
       }
     }
-    
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedOption(null);
     }
     setShowExperiment(true);
-  }
-  
+  };
 
   const startExperiment = () => {
     console.log("Experiment started");
@@ -137,60 +139,80 @@ const Quizes = () => {
   };
 
   const currentQuestion = questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="my-4 text-center">
-      <h3 className="text-3xl font-bold my-4">Quiz: {name}</h3>
-      {currentQuestion && (
-        <div className="w-[90%] md:w-[60%] mx-auto">
-          <p className="text-2xl my-2">{currentQuestion.ques}</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 justify-center">
-            {currentQuestion.options.map((option, index) => (
-              <button
-                key={index}
-                className={`m-2 px-4 py-2 rounded border ${
-                  selectedOption === option ? "bg-purple-600 text-white" : "bg-white border-gray-400"
-                }`}
-                onClick={() => handleAnswerSelection(option)}
-              >
-                <span>{index + 1}. </span> {option}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      {currentQuestionIndex === questions.length - 1 ? (
-        <div>
-          <button
-          className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-          onClick={handleSubmitAns}
-        >
-          Submit Answer
-        </button>
-        </div>
-      ) : (
-        <div>
-          <button
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          onClick={handleNextQuestion}
-        >
-          Next Question
-        </button>
-        </div>
-      )}
-      {
-        showExperiment && <button
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        onClick={startExperiment}
+    <div className="pt-4 pb-8 text-center bg-purple-600">
+      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-6">
+        Quiz for <span className="text-orange-400 uppercase">{name}</span>
+      </h3>
+      <div
+        className="w-full md:w-[80%] lg:w-[70%] bg-white  px-4 pb-4 md:px-8 md:pb-6 my-5 mx-auto rounded-lg
+        relative"
       >
-        Start Experiment
-      </button>
-      }
-      {
-        experimentStart && (
-          <p>Experiment has started</p>
-        )
-      }
+        <div className="absolute top-[-4%] left-[44%] md:left-[47%] bg-green-400 w-[40px] h-[40px] z-50 rounded-full text-white py-2 ">
+          <p className="text-base mx-auto">
+            {currentQuestionIndex + 1}/{questions.length}
+          </p>
+        </div>
+        <div className="">
+          <progress
+            className="progress progress-accent w-full mx-auto mb-4 md:mb-6"
+            value={progress}
+            max="100"
+          ></progress>
+        </div>
+        {currentQuestion && (
+          <div className="px-4 md:px-12 pt-5 pb-8 h-full md:h-[340px]">
+            <p className="text-xl md:text-xl lg:text-2xl py-4 mb-8 mx-auto w-[95%] text-blue-400 font-bold">
+              {currentQuestion.ques}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5 justify-center">
+              {currentQuestion.options.map((option, index) => (
+                <button
+                  key={index}
+                  className={`text-sm md:text-base lg:text-lg m-2 px-4 py-2 rounded border-blue-400 border-2 shadow-md transition duration-300 ease-in-out transform hover:scale-95 ${
+                    selectedOption === option
+                      ? "bg-blue-400 text-white"
+                      : "bg-white"
+                  }`}
+                  onClick={() => handleAnswerSelection(option)}
+                >
+                  <span>{index + 1}. </span> {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {currentQuestionIndex === questions.length - 1 ? (
+          <div>
+            <button
+              className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              onClick={handleSubmitAns}
+            >
+              Submit Answer
+            </button>
+          </div>
+        ) : (
+          <div>
+            <button
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={handleNextQuestion}
+            >
+              Next Question
+            </button>
+          </div>
+        )}
+        {showExperiment && (
+          <button
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={startExperiment}
+          >
+            Start Experiment
+          </button>
+        )}
+        {experimentStart && <p>Experiment has started</p>}
+      </div>
     </div>
   );
 };
